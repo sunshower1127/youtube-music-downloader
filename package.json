@@ -1,0 +1,24 @@
+{
+  "name": "youtube-music-downloader",
+  "version": "1.0.0",
+  "description": "유튜브에서 오디오 추출해서 s3 버킷에다가 저장",
+  "main": "index.ts",
+  "type": "module",
+  "scripts": {
+    "start": "node --no-warnings ."
+  },
+  "author": "",
+  "license": "ISC",
+  "engines": {
+    "node": ">=23.0.0"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.758.0",
+    "@distube/ytdl-core": "^4.16.4",
+    "inquirer": "^12.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "dotenv": "^16.4.7"
+  }
+}
