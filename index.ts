@@ -14,8 +14,8 @@ while (true) {
   ]);
   youtubeLink = youtubeLink.trim();
 
-  let { author, title } = await getMetadata(youtubeLink);
-  author = author.trim();
+  let { author, title, thumbnail } = await getMetadata(youtubeLink);
+  author = author.split("-")[0].trim();
   title = title.trim();
 
   console.log(`Found information: Artist - "${author}", Title - "${title}"`);
@@ -77,7 +77,7 @@ while (true) {
   const audioStream = await getAudioStream(youtubeLink);
   const buffer = await streamToBuffer(audioStream);
 
-  await uploadMusic(finalAuthor, finalTitle, buffer);
+  await uploadMusic(finalAuthor, finalTitle, thumbnail, buffer);
 
   console.log("--------------------------\n");
 }

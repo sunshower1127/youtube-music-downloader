@@ -5,10 +5,11 @@ export async function getMetadata(urlOrId: string) {
     videoDetails: {
       title,
       author: { name: author },
+      thumbnails: [{ url: thumbnailUrl, height: size }],
     },
   } = await ytdl.getBasicInfo(urlOrId);
 
-  return { title, author };
+  return { title, author, thumbnail: { url: thumbnailUrl, size } };
 }
 
 export async function getAudioStream(urlOrId: string) {
