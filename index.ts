@@ -1,5 +1,6 @@
 import inquirer from "inquirer";
-import { uploadMusic } from "./store.ts";
+import { cropImage } from "./image-edit.ts";
+import { uploadMusic, uploadThumbnail } from "./store.ts";
 import { streamToBuffer } from "./util.ts";
 import { getAudioStream, getMetadata } from "./youtube.ts";
 
@@ -77,7 +78,8 @@ while (true) {
   const audioStream = await getAudioStream(youtubeLink);
   const buffer = await streamToBuffer(audioStream);
 
-  await uploadMusic(finalAuthor, finalTitle, thumbnail, buffer);
+  await uploadMusic(finalAuthor, finalTitle, buffer);
+  await uploadThumbnail(finalAuthor, finalTitle, await cropImage(thumbnail));
 
   console.log("--------------------------\n");
 }

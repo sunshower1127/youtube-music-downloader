@@ -11,16 +11,32 @@ const s3 = new S3Client({
   },
 });
 
-export async function uploadMusic(author: string, title: string, thumbnail: { url: string; size: number }, musicBuffer: Buffer) {
+export async function uploadMusic(author: string, title: string, musicBuffer: Buffer) {
   const command = new PutObjectCommand({
     Bucket: process.env.BUCKET_NAME!,
     Key: `${author}/${title}.webm`,
     ContentType: "audio/webm",
     Body: musicBuffer,
     ContentLength: musicBuffer.length,
-    Metadata: {
-      thumbnail: JSON.stringify(thumbnail),
-    },
+  });
+
+  try {
+    const response = await s3.send(command);
+    console.log("Upload complete", response);
+    return response;
+  } catch (error) {
+    console.error("Upload failure", error);
+    throw error;
+  }
+}
+
+export async function uploadThumbnail(author: string, title: string, thumbnailBuffer: Buffer) {
+  const command = new PutObjectCommand({
+    Bucket: process.env.BUCKET_NAME!,
+    Key: `${author}/${title}.webp`,
+    ContentType: "image/webp",
+    Body: thumbnailBuffer,
+    ContentLength: thumbnailBuffer.length,
   });
 
   try {
