@@ -30,13 +30,16 @@ export async function uploadMusic(author: string, title: string, musicBuffer: Bu
   }
 }
 
-export async function uploadThumbnail(author: string, title: string, thumbnailBuffer: Buffer) {
+export async function uploadThumbnail(author: string, title: string, thumbnailBuffer: Buffer, colorCode: string) {
   const command = new PutObjectCommand({
     Bucket: process.env.BUCKET_NAME!,
     Key: `${author}/${title}.webp`,
     ContentType: "image/webp",
     Body: thumbnailBuffer,
     ContentLength: thumbnailBuffer.length,
+    Metadata: {
+      colorcode: colorCode,
+    },
   });
 
   try {
