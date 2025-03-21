@@ -1,6 +1,7 @@
 import inquirer from "inquirer";
 import { cropImage, getAverageColor } from "./image-edit.ts";
 import { uploadMusic, uploadThumbnail } from "./store.ts";
+import { getMusicValue } from "./util.ts";
 import { getAudio, getMetadata } from "./youtube.ts";
 
 while (true) {
@@ -79,7 +80,8 @@ while (true) {
     console.error("Failed to download audio");
     continue;
   }
-  await uploadMusic(finalAuthor, finalTitle, buffer);
+
+  await uploadMusic(finalAuthor, finalTitle, buffer, await getMusicValue(buffer));
   await uploadThumbnail(finalAuthor, finalTitle, await cropImage(thumbnail), await getAverageColor(thumbnail));
   console.log("--------------------------\n");
 }

@@ -1,38 +1,54 @@
-import ytdl from "@distube/ytdl-core";
-import { extractAudio, streamToBuffer } from "./util.ts";
+import { spawn } from "child_process";
 
 export async function getMetadata(urlOrId: string) {
-  const {
-    videoDetails: {
-      title,
-      author: { name: author },
-      thumbnails,
-    },
-  } = await ytdl.getBasicInfo(urlOrId);
+  return new Promise<{ title: string; author: string; thumbnail: string }>((resolve, reject) => {
+    const ytDlp = spawn("yt-dlp", ["--print", "%(title)s", "--print", "%(uploader)s", "--print", "%(thumbnail)s", "--no-download", "--no-playlist", `${urlOrId}`]);
 
-  const thumbnail = thumbnails[thumbnails.length - 1].url;
+    let output = "";
 
-  return { title, author, thumbnail };
+    ytDlp.stdout.on("data", (data) => {
+      output += data.toString();
+    });
+
+    ytDlp.stderr.on("data", (data) => {
+      console.error(`yt-dlp: ${data}`);
+    });
+
+    ytDlp.on("close", (code) => {
+      if (code !== 0) {
+        reject(new Error(`yt-dlp process exited with code ${code}`));
+        return;
+      }
+
+      const [title, author, thumbnail] = output.trim().split("\n");
+
+      resolve({ title, author, thumbnail });
+    });
+  });
 }
 
 export async function getAudio(urlOrId: string) {
-  let readable = ytdl(urlOrId, {
-    filter: (f) => {
-      return f.container === "webm" && !f.hasVideo && f.hasAudio && f.audioQuality === "AUDIO_QUALITY_MEDIUM";
-    },
-  });
+  return new Promise<Buffer>(async (resolve, reject) => {
+    const ytDlp = spawn("yt-dlp", ["-f", "251", "-o", "-", "--no-playlist", urlOrId]); // 251: medium quality webm audio only
 
-  try {
-    // Issue: https://github.com/fent/node-ytdl-core/issues/1230
-    return await streamToBuffer(readable);
-  } catch (error) {
-    console.error("Failed to download audio. Instead, trying to extract audio from video...");
+    const chunks: Buffer[] = [];
 
-    readable = ytdl(urlOrId, {
-      quality: "highest",
+    ytDlp.stdout.on("data", (chunk) => {
+      chunks.push(Buffer.from(chunk));
     });
 
-    readable = await extractAudio(readable);
-    return await streamToBuffer(readable);
-  }
+    ytDlp.stderr.on("data", (data) => {
+      console.error(`yt-dlp: ${data}`);
+    });
+
+    ytDlp.on("close", (code) => {
+      if (code !== 0) {
+        reject(new Error(`yt-dlp process exited with code ${code}`));
+        return;
+      }
+
+      const buffer = Buffer.concat(chunks);
+      resolve(buffer);
+    });
+  });
 }
