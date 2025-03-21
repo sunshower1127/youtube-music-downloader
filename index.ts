@@ -1,8 +1,7 @@
 import inquirer from "inquirer";
 import { cropImage, getAverageColor } from "./image-edit.ts";
 import { uploadMusic, uploadThumbnail } from "./store.ts";
-import { streamToBuffer } from "./util.ts";
-import { getAudioStream, getMetadata } from "./youtube.ts";
+import { getAudio, getMetadata } from "./youtube.ts";
 
 while (true) {
   let { youtubeLink } = await inquirer.prompt([
@@ -75,8 +74,11 @@ while (true) {
     console.log(`Saved with current info: ${finalAuthor} - ${finalTitle}`);
   }
 
-  const audioStream = await getAudioStream(youtubeLink);
-  const buffer = await streamToBuffer(audioStream);
+  const buffer = await getAudio(youtubeLink);
+  if (!buffer) {
+    console.error("Failed to download audio");
+    continue;
+  }
   await uploadMusic(finalAuthor, finalTitle, buffer);
   await uploadThumbnail(finalAuthor, finalTitle, await cropImage(thumbnail), await getAverageColor(thumbnail));
   console.log("--------------------------\n");
