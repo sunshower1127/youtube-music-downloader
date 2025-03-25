@@ -1,4 +1,6 @@
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import fs from "fs";
+import { files } from "./path.ts";
 
 import "dotenv/config";
 
@@ -11,45 +13,43 @@ const s3 = new S3Client({
   },
 });
 
-export async function uploadMusic(author: string, title: string, musicBuffer: Buffer, musicValue: { emotion: number; energy: number }) {
+export async function uploadMusicWithMetadata(author: string, title: string, metadata: Record<string, any>) {
+  metadata = Object.fromEntries(Object.entries(metadata).map(([key, value]) => [key, String(value)]));
+  const inputPath = files.normalizedMusic(author, title);
+  const fileStream = fs.createReadStream(inputPath);
+  const fileSizeInBytes = fs.statSync(inputPath).size;
+
   const command = new PutObjectCommand({
     Bucket: process.env.BUCKET_NAME!,
-    Key: `${author}/${title}.webm`,
-    ContentType: "audio/webm",
-    Body: musicBuffer,
-    ContentLength: musicBuffer.length,
-    Metadata: {
-      emotion: musicValue.emotion.toString(),
-      energy: musicValue.energy.toString(),
-    },
+    Key: `${author}/${title}.mp4`,
+    ContentType: "audio/mp4",
+    Body: fileStream,
+    ContentLength: fileSizeInBytes,
+    Metadata: metadata,
   });
 
   try {
-    const response = await s3.send(command);
-    console.log("S3 Music Upload complete");
-    return response;
+    await s3.send(command);
   } catch (error) {
     console.error("Upload failure", error);
     throw error;
   }
 }
 
-export async function uploadThumbnail(author: string, title: string, thumbnailBuffer: Buffer, colorCode: string) {
+export async function uploadThumbnail(author: string, title: string) {
+  const inputPath = files.thumbnail(author, title);
+  const fileStream = fs.createReadStream(inputPath);
+  const fileSizeInBytes = fs.statSync(inputPath).size;
   const command = new PutObjectCommand({
     Bucket: process.env.BUCKET_NAME!,
     Key: `${author}/${title}.webp`,
     ContentType: "image/webp",
-    Body: thumbnailBuffer,
-    ContentLength: thumbnailBuffer.length,
-    Metadata: {
-      colorcode: colorCode,
-    },
+    Body: fileStream,
+    ContentLength: fileSizeInBytes,
   });
 
   try {
-    const response = await s3.send(command);
-    console.log("S3 Thumnail Upload complete");
-    return response;
+    await s3.send(command);
   } catch (error) {
     console.error("Upload failure", error);
     throw error;

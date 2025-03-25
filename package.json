@@ -1,8 +1,8 @@
 {
-  "name": "youtube-music-downloader",
-  "version": "1.0.0",
+  "name": "youtube-music-clone-downloader-cli",
+  "version": "2.0.0",
   "description": "유튜브에서 오디오 추출해서 s3 버킷에다가 저장",
-  "main": "index.ts",
+  "main": "_index.ts",
   "type": "module",
   "scripts": {
     "start": "node --no-warnings ."
@@ -14,11 +14,10 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.758.0",
-    "inquirer": "^12.5.0",
-    "sharp": "^0.33.5"
+    "inquirer": "^12.5.0"
   },
   "devDependencies": {
-    "@types/node": "^22.13.10",
+    "@types/node": "^22.13.13",
     "dotenv": "^16.4.7"
   }
 }

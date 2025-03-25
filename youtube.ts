@@ -1,54 +1,29 @@
-import { spawn } from "child_process";
+import { exec } from "child_process";
+import { promisify } from "util";
+import { files } from "./path.ts";
 
-export async function getMetadata(urlOrId: string) {
-  return new Promise<{ title: string; author: string; thumbnail: string }>((resolve, reject) => {
-    const ytDlp = spawn("yt-dlp", ["--print", "%(title)s", "--print", "%(uploader)s", "--print", "%(thumbnail)s", "--no-download", "--no-playlist", `${urlOrId}`]);
+const execAsync = promisify(exec);
 
-    let output = "";
+export async function fetchMetadata(urlOrId: string) {
+  try {
+    const command = `yt-dlp --print "%(title)s" --print "%(uploader)s" --print "%(thumbnail)s" --no-download --no-playlist "${urlOrId}"`;
+    const { stdout } = await execAsync(command);
 
-    ytDlp.stdout.on("data", (data) => {
-      output += data.toString();
-    });
+    let [title, artist, thumbnail] = stdout.trim().split("\n");
+    artist = artist.split(" - ")[0];
 
-    ytDlp.stderr.on("data", (data) => {
-      console.error(`yt-dlp: ${data}`);
-    });
-
-    ytDlp.on("close", (code) => {
-      if (code !== 0) {
-        reject(new Error(`yt-dlp process exited with code ${code}`));
-        return;
-      }
-
-      const [title, author, thumbnail] = output.trim().split("\n");
-
-      resolve({ title, author, thumbnail });
-    });
-  });
+    return { title, artist, thumbnail };
+  } catch (error) {
+    throw new Error(`yt-dlp 메타데이터 추출 중 오류 발생: ${error.message}`);
+  }
 }
 
-export async function getAudio(urlOrId: string) {
-  return new Promise<Buffer>(async (resolve, reject) => {
-    const ytDlp = spawn("yt-dlp", ["-f", "251", "-o", "-", "--no-playlist", urlOrId]); // 251: medium quality webm audio only
-
-    const chunks: Buffer[] = [];
-
-    ytDlp.stdout.on("data", (chunk) => {
-      chunks.push(Buffer.from(chunk));
-    });
-
-    ytDlp.stderr.on("data", (data) => {
-      console.error(`yt-dlp: ${data}`);
-    });
-
-    ytDlp.on("close", (code) => {
-      if (code !== 0) {
-        reject(new Error(`yt-dlp process exited with code ${code}`));
-        return;
-      }
-
-      const buffer = Buffer.concat(chunks);
-      resolve(buffer);
-    });
-  });
+export async function downloadMusic(urlOrId: string, artist: string, title: string) {
+  try {
+    const outputPath = files.music(artist, title);
+    const command = `yt-dlp -f 234 -o "${outputPath}" --no-playlist "${urlOrId}"`;
+    await execAsync(command);
+  } catch (error) {
+    throw new Error(`음원 다운로드중 오류 발생: ${error.message}`);
+  }
 }
