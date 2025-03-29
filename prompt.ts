@@ -59,15 +59,15 @@ function promptCropThumbnail() {
   ]);
 }
 
-function promptTargetVolume() {
-  return inquirer.prompt<{ targetVolume: number }>([
-    {
-      type: "number",
-      name: "targetVolume",
-      message: "What volume should the music be normalized to?",
-      default: -14,
-    },
-  ]);
-}
+// function promptTargetVolume() {
+//   return inquirer.prompt<{ targetVolume: number }>([
+//     {
+//       type: "number",
+//       name: "targetVolume",
+//       message: "What volume should the music be normalized to?",
+//       default: -14,
+//     },
+//   ]);
+// }
 
-export { promptArtistTitle, promptCropThumbnail, promptTargetVolume, promptYoutubeLink };
+export { promptArtistTitle, promptCropThumbnail, promptYoutubeLink };

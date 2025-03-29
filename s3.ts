@@ -13,9 +13,13 @@ const s3 = new S3Client({
   },
 });
 
+function camelToSnake(str: string): string {
+  return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+}
+
 export async function uploadMusicWithMetadata(author: string, title: string, metadata: Record<string, any>) {
-  metadata = Object.fromEntries(Object.entries(metadata).map(([key, value]) => [key, String(value)]));
-  const inputPath = files.normalizedMusic(author, title);
+  metadata = Object.fromEntries(Object.entries(metadata).map(([key, value]) => [camelToSnake(key), String(value)]));
+  const inputPath = files.music(author, title);
   const fileStream = fs.createReadStream(inputPath);
   const fileSizeInBytes = fs.statSync(inputPath).size;
 

@@ -1,29 +1,51 @@
-import { exec } from "child_process";
-import { promisify } from "util";
+import { spawn } from "child_process";
 import { files } from "./path.ts";
 
-const execAsync = promisify(exec);
+export async function getMetadata(urlOrId: string) {
+  return new Promise<{ title: string; artist: string; thumbnail: string }>((resolve, reject) => {
+    const ytDlp = spawn("yt-dlp", [
+      "--print",
+      "%(title)s",
+      "--print",
+      "%(uploader)s",
+      "--print",
+      "%(thumbnail)s",
+      "--no-download",
+      "--no-playlist",
+      `${urlOrId}`,
+    ]);
 
-export async function fetchMetadata(urlOrId: string) {
-  try {
-    const command = `yt-dlp --print "%(title)s" --print "%(uploader)s" --print "%(thumbnail)s" --no-download --no-playlist "${urlOrId}"`;
-    const { stdout } = await execAsync(command);
+    let output = "";
 
-    let [title, artist, thumbnail] = stdout.trim().split("\n");
-    artist = artist.split(" - ")[0];
+    ytDlp.stdout.on("data", (data) => {
+      output += data.toString();
+    });
 
-    return { title, artist, thumbnail };
-  } catch (error) {
-    throw new Error(`yt-dlp 메타데이터 추출 중 오류 발생: ${error.message}`);
-  }
+    ytDlp.on("close", (code) => {
+      if (code !== 0) {
+        reject(new Error(`yt-dlp process exited with code ${code}`));
+        return;
+      }
+
+      const [title, artist, thumbnail] = output.trim().split("\n");
+
+      resolve({ title, artist, thumbnail });
+    });
+  });
 }
 
 export async function downloadMusic(urlOrId: string, artist: string, title: string) {
-  try {
-    const outputPath = files.music(artist, title);
-    const command = `yt-dlp -f 234 -o "${outputPath}" --no-playlist "${urlOrId}"`;
-    await execAsync(command);
-  } catch (error) {
-    throw new Error(`음원 다운로드중 오류 발생: ${error.message}`);
-  }
+  return new Promise<void>(async (resolve, reject) => {
+    let ytDlp = spawn("yt-dlp", ["-f", "234", "-o", files.music(artist, title), "--no-playlist", urlOrId]);
+    let error = false;
+
+    ytDlp.on("close", async (code) => {
+      if (code !== 0 || error) {
+        reject(new Error(`음원 다운로드중 오류 발생: ${error}`));
+        return;
+      }
+
+      resolve();
+    });
+  });
 }

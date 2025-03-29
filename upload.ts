@@ -1,6 +1,6 @@
 import fs from "fs";
 import { files } from "./path.ts";
-import { uploadMusicWithMetadata, uploadThumbnail } from "./store.ts";
+import { uploadMusicWithMetadata, uploadThumbnail } from "./s3.ts";
 
 export default async function upload(artist: string, title: string) {
   const metadata = await loadMetadata(artist, title);
